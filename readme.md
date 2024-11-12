@@ -1,3 +1,6 @@
+# Group Members
+- Axel Colmant
+- Mohamed Massamba SENE
 
 # Objectif de ce code
 (Ce code est indépendant de tout le reste du dépôt)
@@ -23,7 +26,7 @@ For the loss function of the model we want to use a combination of perceptual, r
 This network allows us to create a new image from the given skeleton posture in x,y coordinates which are flattened into a 1D tensor. We thus create the neural network by upsampling to project the input to a higher dimension then uspsampling into an inital 16x16 images we also apply self-attention before going through a residual block as presented in the ResNet architecture and apply our final upsampling to get the image size of (3,128,128). We also use the Tanh activation function to normalize the image between -1 et 1 and initialize the weights using the *init_weights()* method.
 We also write the *forward()* method to pass the inputs to the model
 - GenImageToImage NN
-This network allows us to create a new image from the given skeleton posture in x,y coordinates which was turned into an image beforehand. To do so we proceed by first downsampling the image into a smaller representation before upsampling the obtained representation to the final image. To ensure better consistent and better feature representation we also include skip connections as shown in the UNet architecture between corresponding encoder and decoder blocks. We also use the Tanh activation function to normalize the image between -1 et 1 and initialize the weights using the *init_weights()* method. We write the *forward()* method to pass our inputs to the model
+This network allows us to create a new image from the given skeleton posture in x,y coordinates which was turned into an image beforehand. To do so we proceed by first downsampling the image into a smaller representation then going through the bottleneck with residual blocks before upsampling the obtained representation to the final image. To ensure better consistent and better feature representation we also include skip connections as shown in the UNet architecture between corresponding encoder and decoder blocks. We also use the Tanh activation function to normalize the image between -1 et 1 and initialize the weights using the *init_weights()* method. We write the *forward()* method to pass our inputs to the model
 
 We then update the **GenVanillaNN** class's intialization method by setting the source transformation and network to use based on the selected option. For option 1 we have no source transformation and we use the GenSkeToImage network, for option 2 we use the SkeToImageTransform as source transformation on the input ske to obtain the image and the GenImageToImage network. We also update the filename to include the option selected and the target video name in order to not overwrite the saved models for differents options or videos. We leave the rest of the code as it was with the creation of the dataset now also including the source transformation.<br/>
 We then write the *train()* method which starts by the initialisation of the loss (L1Loss which allows us to compute the MAE between the generated and output images), optimizer (Adam) and passing the model to training mode. The training loop then consists of looping through the epochs and for each epoch we retrieve the batches in the dataloader.<br/> Thus for each batch, we perform the training by predicting images based on the skeleton by forward passing the inputs to the model we then retrieve the generated poses from the predicted images then compute the combined loss before backpropagating the loss and updating the weights. At the end of each epoch we print the loss. After going through all batches we start the next epoch, and after all epochs of training we then save the obtained network.
@@ -53,7 +56,8 @@ To run the code
 ```bash
 conda env create -f env.yaml
 ```
-- Run the DanceDemo.py file while modifying the GEN_TYPE variable to modify the network used to the generation (1 for nearest, 2 for direct network with coordinates, 3 for direct network with skeleton image, 4 for GAN) as well as the source and target video filenames. The network will then be trained or loaded and the demo will run afterwards.
+- Run the DanceDemo.py file while modifying the GEN_TYPE variable to modify the network used to the generation (1 for nearest, 2 for direct network with coordinates, 3 for direct network with skeleton image, 4 for GAN) as well as the source and target video filenames. The network will then be trained if no weights file are already present or loaded if so. Once the model is traine/loaded the demo will run afterwards.
 ```bash
+conda activate tp_image 
 python DanceDemo.py
 ```

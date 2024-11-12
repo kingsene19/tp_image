@@ -92,7 +92,6 @@ class GenGAN():
                 real = torch.full((batch_size,), self.real_labels)
                 fake = torch.full((batch_size,), self.fake_labels)
 
-
                 # Train Discriminator
                 optimizerD.zero_grad()
                 
