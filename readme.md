@@ -33,7 +33,7 @@ We then write the *train()* method which starts by the initialisation of the los
 
 We also write the *generate()* method which starts by setting the model to evaluation mode and disabling gradient calculation, we then preprocess the input skeleton and adding to it a dimension for the batch. We then pass the image to our model for prediction before converting the obtained tensor to an image using the *tensor2image()* method of the dataset.
 
-We also update the main function of the file so that when run it now trains for both option 1 and option 2 for 20 epochs each.
+We also update the main function of the file so that when run it now trains for both option 1 and option 2 for 50 epochs each.
 
 
 ### GAN
@@ -47,36 +47,34 @@ We then start by training the discriminator, to do so we forward pass it the tar
 
 We also write the *generate()* method which starts by setting the generator to evaluation mode and disabling gradient calculation, we then preprocess the input skeleton and adding to it a dimension for the batch. We then pass the image to our generator for prediction before converting the obtained tensor to an image using the *tensor2image()* method of the dataset.
 
-We also update the main function of the file to perform training for 4 epochs.
+We also update the main function of the file to perform training for 10 epochs.
 
-
-## Running the code
-To run the code
-- Create the environment with all the required depencies by using the command
+## Create and activate an environment with all the required dependenc
 ```bash
 conda env create -f env.yaml
-```
-- Run the DanceDemo.py file while modifying the GEN_TYPE variable to modify the network used to the generation (1 for nearest, 2 for direct network with coordinates, 3 for direct network with skeleton image, 4 for GAN) as well as the source and target video filenames. The network will then be trained if no weights file are already present or loaded if so. Once the model is traine/loaded the demo will run afterwards.
-```bash
 conda activate tp_image 
-python DanceDemo.py
+```
+Then create the training data
+```bash
+python VideoSkeleton.py
 ```
 
 ## Training 
-Running the code also includes a training step that is added inside however if you want to train the networks separately it can be done through the following steps
-- Create the environment with all the required depencies by using the command
-```bash
-conda env create -f env.yaml
-```
+To train the networks separately it can be done through the following steps
 - Training the GenVanillaNN
 ```bash
-conda activate tp_image 
 python GenVanillaNN.py
 ```
 This will train both the SkeToImage model and the ImageToImage model for 50 epochs
 - Training the GAN
 ```bash
-conda activate tp_image 
 python GenGAN.py
 ```
 This will train the GAN for 10 epochs
+
+## Running the code
+Run the DanceDemo.py file while modifying the GEN_TYPE variable to modify the network used to the generation (1 for nearest, 2 for direct network with coordinates, 3 for direct network with skeleton image, 4 for GAN) as well as the source and target video filenames. The network will then be trained if no weights file are already present or loaded if so. Once the model is trained/loaded the demo will run afterwards.
+```bash
+conda activate tp_image 
+python DanceDemo.py
+```
