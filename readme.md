@@ -61,3 +61,22 @@ conda env create -f env.yaml
 conda activate tp_image 
 python DanceDemo.py
 ```
+
+## Training 
+Running the code also includes a training step that is added inside however if you want to train the networks separately it can be done through the following steps
+- Create the environment with all the required depencies by using the command
+```bash
+conda env create -f env.yaml
+```
+- Training the GenVanillaNN
+```bash
+conda activate tp_image 
+python GenVanillaNN.py
+```
+This will train both the SkeToImage model and the ImageToImage model for 50 epochs
+- Training the GAN
+```bash
+conda activate tp_image 
+python GenGAN.py
+```
+This will train the GAN for 10 epochs
