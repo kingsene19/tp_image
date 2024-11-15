@@ -1,29 +1,26 @@
-# Group Members
+## Group Members
 - Axel Colmant
 - Mohamed Massamba SENE
 
-# Objectif de ce code
-(Ce code est indépendant de tout le reste du dépôt)
+## Objective
+Given a video of a source person and another of a person, our goal is to generate a new video of the target performing the same movements as the source.
 
-À partir d'une vidéo d'une personne source et d'une autre d'une personne, notre objectif est de générer une nouvelle vidéo de la cible effectuant les mêmes mouvements que la source. 
-
-[Allez voir le sujet du TP ici](http://alexandre.meyer.pages.univ-lyon1.fr/m2-apprentissage-profond-image/am/tp_dance/)
+[Link to the subject](http://alexandre.meyer.pages.univ-lyon1.fr/m2-apprentissage-profond-image/am/tp_dance/)
 
 
-# Steps of implementation
+## Steps of implementation
 To realize this TP we performed the following steps
 
-## Nearest Neighbor
+### Nearest Neighbor
 To implement the approach consisting of searching for the closest skeleton, by looking through the Skeleton class we found that there existed a method for calculate the distance between two skeletons as well as in the VideoSkeleton class a method to get all the skeletons.
 
 As such we updated the generate method of the **GenNeirest** class by introducing variables to track the minimal distance found and the index of that closest skeleton. We then loop through all the skeletons in the videoSkeletonTarget by using the *skeCount()* method and calculate the distance between the input skeleton and the current skeleton by using the *distance()* method and update the minimum distance and index if the current distance is smaller the the minimum at that time.
 
 At the end of the loop, if a valid index was found we then return the corresponding image by using the *readImage()* method and if not we return an empty white image.
 
-### Results :
 ![Nearest Neighbor](img/taichi1-Nearest.png)
 
-## Direct Network
+### Direct Network
 
 Seeing as this network presents two approches with one requiring drawing an image form the x,y coordiantes of the given skeleton we first begin by modifying the SkeletonToImageTransform class by modifying the call method in order to create said image by drawing on an empty image using the Skeleton.draw_reduced image and then converting it to a tensor image.<br/>
 For the loss function of the model we want to use a combination of perceptual, reconstruction and pose losses while assigning weights to each. The reconstruction and pose loss allow us to check that the generated image pose is indeed correct and the perceptual loss allows us to have good visuals. We also create two networks<br/>
@@ -38,16 +35,15 @@ We then write the *train()* method which starts by the initialisation of the los
 
 We also write the *generate()* method which starts by setting the model to evaluation mode and disabling gradient calculation, we then preprocess the input skeleton and adding to it a dimension for the batch. We then pass the image to our model for prediction before converting the obtained tensor to an image using the *tensor2image()* method of the dataset.
 
-We also update the main function of the file so that when run it now trains for both option 1 and option 2 for 50 epochs each.
+We also update the main function of the file so that when run it now trains for both option 1 and option 2 for 50 epochs each:
 
-### Results :
 #### Skeleton to Image
 ![Skeleton to Image](img/taichi1-VanillaNN-Ske.png)
 
 #### Skeleton Image to Image
 ![Image to Image](img/taichi1-VanillaNN-Image.png)
 
-## GAN
+### GAN
 
 We first start creating our discriminator network to predict whether the images are real or fake. The network consists of first downsampling the input image using convolution to obtain feature maps before using a *Sigmoid* activation function in order to get a value between 0 and 1 based on whether the image is real or not.<br/>
 We also use as loss function the Binary Cross Entropy as we are performing binary classification for the Discriminator and it is well suited to the task and for the Generator we use a combination of our previous L1Loss as well as the adversarial loss which is also binary cross entropy based on whether the generator was able to fool the discriminator or not.
@@ -60,12 +56,12 @@ We also write the *generate()* method which starts by setting the generator to e
 
 We also update the main function of the file to perform training for 10 epochs.
 
-### Results :
 ![GAN](img/taichi1-GAN.png)
 
 
-# Running the code
-## Create and activate an environment with all the required dependenc
+## Running the code
+
+### Create and activate an environment with all the required dependenc
 ```bash
 conda env create -f env.yaml
 conda activate tp_image 
@@ -75,7 +71,7 @@ Then create the training data
 python VideoSkeleton.py
 ```
 
-## Training 
+### Training 
 To train the networks separately it can be done through the following steps
 - Training the GenVanillaNN
 ```bash
@@ -88,9 +84,13 @@ python GenGAN.py
 ```
 This will train the GAN for 10 epochs
 
-## Running the code
-Run the DanceDemo.py file while modifying the GEN_TYPE variable to modify the network used to the generation (1 for nearest, 2 for direct network with coordinates, 3 for direct network with skeleton image, 4 for GAN) as well as the source and target video filenames. The network will then be trained if no weights file are already present or loaded if so. Once the model is trained/loaded the demo will run afterwards.
+### Demo
+To run the complete code you can proceed as follows
 ```bash
 conda activate tp_image 
 python DanceDemo.py
 ```
+You will then be prompted to choose the generation type you want to use (1 for Nearest, 2 for SkeToImage, 3 for SkeImageToImage, 4 for GAN)<br/>
+Once the choice is made if the option was not one you will then be prompted to choose whether to load the network or train it anew (0 for False, 1 for True)<br/>
+Once the choice is made if the chosen option was 1, you will be prompted for the amount of epochs you'd like to train for.<br/>
+After this the code will run and you will get the demo.

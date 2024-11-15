@@ -20,7 +20,7 @@ class DanceDemo:
     """ class that run a demo of the dance.
         The animation/posture from self.source is applied to character define self.target using self.gen
     """
-    def __init__(self, filename_src, filename_tgt, typeOfGen=2):
+    def __init__(self, filename_src, filename_tgt, typeOfGen=2, train=False, epochs=20):
         self.typeOfGen = typeOfGen
         directory = os.path.dirname(__file__)
         
@@ -32,20 +32,33 @@ class DanceDemo:
         print('---')
         print(f"Source: {filename_src}")
         print(f"Target: {filename_tgt}")
+        print(f"Name: {self.name}")
         print('---')
         
         if typeOfGen==1:           # Nearest
             print("Generator: GenNeirest")
             self.generator = GenNeirest(self.target)
-        elif typeOfGen==2:         # VanillaNN from skeleton
-            print("Generator: GenSimpleNN")
-            self.generator = GenVanillaNN(self.target, self.name, loadFromFile=True, optSkeOrImage=1)
-        elif typeOfGen==3:         # VanillaNN from image
-            print("Generator: GenSimpleNN")
-            self.generator = GenVanillaNN(self.target, self.name, loadFromFile=True, optSkeOrImage=2)
+        elif typeOfGen==2:         # VanillaNN
+            print("Generator: GenSkeToImage")
+            if os.path.exists(f"models/DanceGenVanillaFromSke-{self.name}.pth") and not train:
+                self.generator = GenVanillaNN( self.target, self.name, loadFromFile=True, optSkeOrImage=1)
+            else:
+                self.generator = GenVanillaNN( self.target, self.name, loadFromFile=False, optSkeOrImage=1)
+                self.generator.train(epochs)
+        elif typeOfGen==3:         # VanillaNN
+            print("Generator: GenImageToImage")
+            if os.path.exists(f"models/DanceGenVanillaFromSkeim-{self.name}.pth") and not train:
+                self.generator = GenVanillaNN( self.target, self.name, loadFromFile=True, optSkeOrImage=2)
+            else:
+                self.generator = GenVanillaNN( self.target,self.name, loadFromFile=False, optSkeOrImage=2)
+                self.generator.train(epochs)
         elif typeOfGen==4:         # GAN
-            print("Generator: GenSimpleNN")
-            self.generator = GenGAN(self.target, self.name, loadFromFile=True)
+            print("Generator: GAN")
+            if os.path.exists(f"models/DanceGenGAN-{self.name}.pth") and not train:
+                self.generator = GenGAN( self.target,self.name, loadFromFile=True)
+            else:
+                self.generator = GenGAN( self.target,self.name, loadFromFile=False)
+                self.generator.train(epochs)
         else:
             print("DanceDemo: typeOfGen error!!!")
 
@@ -124,13 +137,13 @@ class DanceDemo:
         plt.savefig(os.path.join(output_dir, f"{self.name}-{typeGen}.png"))
         plt.show()
             
-            
-                
-
-
-
 if __name__ == '__main__':
-    GEN_TYPE = 4
-    for i in range(4):
-        ddemo = DanceDemo("data/taichi2_full.mp4", "data/taichi1.mp4", i+1)
-        ddemo.plot()
+    GEN_TYPE = eval(input("Which generation type would you like?\n1.GenNearest\n2.GenSkeToImage\n3.GenImageToImage\n4.GenGAN\nAnswer:"))
+    TRAIN = False
+    EPOCHS = 20
+    if GEN_TYPE != 1:
+        TRAIN = bool(eval(input("Do you want to train the network or load weights?\n0.False\n1.True\nAnswer:")))
+        if TRAIN:
+            EPOCHS = eval(input("How many epochs of training do you want?\nAnswer:"))
+    ddemo = DanceDemo("data/taichi2_full.mp4", "data/taichi1.mp4", GEN_TYPE, TRAIN, epochs=EPOCHS)
+    ddemo.draw()

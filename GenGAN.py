@@ -74,7 +74,7 @@ class GenGAN():
         self.dataloader = torch.utils.data.DataLoader(dataset=self.dataset, batch_size=32, shuffle=True)
         if loadFromFile and os.path.isfile(self.filename):
             print("GenGAN: Load=", self.filename, "   Current Working Directory=", os.getcwd())
-            self.netG = torch.load(self.filename)
+            self.netG = torch.load(self.filename, map_location=torch.device('cpu'))
 
 
     def train(self, n_epochs=20):
