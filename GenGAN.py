@@ -57,13 +57,12 @@ class GenGAN():
     """ class that Generate a new image from videoSke from a new skeleton posture
        Fonc generator(Skeleton)->Image
     """
-    def __init__(self, videoSke, skefile, loadFromFile=False):
+    def __init__(self, videoSke, loadFromFile=False):
         self.netG = GenNNSkeImToImage()
         self.netD = Discriminator()
         self.real_labels = 1.
         self.fake_labels = 0.
-        self.skefile = skefile.split("/")[1].split(".")[0]
-        self.filename = "data/DanceGenGAN"+self.skefile+".pth"
+        self.filename = "models/DanceGenGAN.pth"
         tgt_transform = transforms.Compose(
                             [transforms.Resize((128, 128)),
                             transforms.CenterCrop(128),

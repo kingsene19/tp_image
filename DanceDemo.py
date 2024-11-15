@@ -41,11 +41,7 @@ class DanceDemo:
             self.generator = GenVanillaNN(self.target, loadFromFile=True, optSkeOrImage=2)
         elif typeOfGen==4:         # GAN
             print("Generator: GenSimpleNN")
-            if os.path.exists("data/DanceGenGAN"+self.filename.split("/")[1].split(".")[0]+".pth"):
-                self.generator = GenGAN( self.target,self.filename, loadFromFile=True)
-            else:
-                self.generator = GenGAN( self.target,self.filename, loadFromFile=False)
-                self.generator.train()
+            self.generator = GenGAN(self.target, loadFromFile=True)
         else:
             print("DanceDemo: typeOfGen error!!!")
 
@@ -78,6 +74,6 @@ class DanceDemo:
 
 
 if __name__ == '__main__':
-    GEN_TYPE = 3
+    GEN_TYPE = 4
     ddemo = DanceDemo("data/taichi2_full.mp4", "data/taichi1.mp4", GEN_TYPE)
     ddemo.draw()
