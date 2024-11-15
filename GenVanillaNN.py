@@ -206,9 +206,9 @@ class GenNNSkeToImage(nn.Module):
         return x
     
 
-class GenImageToImageNN(nn.Module):
+class GenNNSkeImToImage(nn.Module):
     def __init__(self):
-        super(GenImageToImageNN, self).__init__()
+        super(GenNNSkeImToImage, self).__init__()
         
         # Encoder
         self.e1 = nn.Sequential(
@@ -310,7 +310,7 @@ class GenVanillaNN():
         else:
             src_transform = SkeToImageTransform(input_size)
             filename = "models/DanceGenVanillaFromSkeim.pth"
-            self.netG = GenImageToImageNN()
+            self.netG = GenNNSkeImToImage()
         
         directory = os.path.dirname(__file__)
         self.filename = os.path.join(directory, filename)
