@@ -3,6 +3,10 @@ import cv2
 import os
 import pickle
 import sys
+import matplotlib.pyplot as plt
+import time
+import matplotlib
+matplotlib.use('Agg')
 
 from VideoSkeleton import VideoSkeleton
 from VideoSkeleton import combineTwoImages
@@ -70,10 +74,61 @@ class DanceDemo:
                 if key & 0xFF == ord('n'):
                     self.source.readNFrames( 100 )
         cv2.destroyAllWindows()
+        
+    def plot(self, n=10):
+        col = 5
+        row = (n * 2) // col
+        
+        print(f"Plotting {n} frames")
+        
+        ske = Skeleton()
+        image_err = np.zeros((128, 128, 3), dtype=np.uint8)
+        image_err[:, :] = (0, 0, 255)
+        
+        plt.figure(figsize=(col * 2, row * 2))
+        for i in range(n):
+            index = max(0, min(self.source.getTotalFrames() // n * i, self.source.getTotalFrames()-1))
+            self.source.cap.set(cv2.CAP_PROP_POS_FRAMES, index)
+            image_src = self.source.readFrame()  
+            isSke, image_src, ske = self.target.cropAndSke(image_src, ske)
+            duration = -1
+            if isSke:
+                ske.draw(image_src)
+                st = time.time()
+                image_tgt = self.generator.generate(ske)
+                duration = time.time() - st
+            else:
+                image_tgt = image_err
+            
+            r = i // col
+            c = i % col 
+            plot_index = col * r * 2 + c + 1
+            plt.subplot(row, col, plot_index)
+            plt.imshow(cv2.cvtColor(image_src, cv2.COLOR_BGR2RGB))
+            plt.axis('off')
+            plt.title(f"Frame {index}")
+            
+            plot_index = col * (r * 2 + 1) + c + 1
+            plt.subplot(row, col, plot_index)
+            plt.imshow(cv2.cvtColor(image_tgt, cv2.COLOR_BGR2RGB))
+            plt.axis('off')
+            plt.title(f"Generated {index} \n({duration:.2f} s)")
+            print(f"Generated {index} ({duration:.2f} s)")
+
+        plt.tight_layout()
+        typeGen = "Nearest" if self.typeOfGen==1 else "VanillaNN-Ske" if self.typeOfGen==2 else "VanillaNN-Image" if self.typeOfGen==3 else "GAN"
+        directory = os.path.dirname(__file__)
+        output_dir = os.path.join(directory, "output")
+        os.makedirs(output_dir, exist_ok=True)
+        plt.savefig(os.path.join(output_dir, f"{self.name}-{typeGen}.png"))
+        plt.show()
+            
+            
+                
 
 
 
 if __name__ == '__main__':
-    GEN_TYPE = 3
+    GEN_TYPE = 4
     ddemo = DanceDemo("data/taichi2_full.mp4", "data/taichi1.mp4", GEN_TYPE)
-    ddemo.draw()
+    ddemo.plot()

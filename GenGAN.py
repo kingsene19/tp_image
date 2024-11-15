@@ -62,7 +62,7 @@ class GenGAN():
         self.netD = Discriminator()
         self.real_labels = 1.
         self.fake_labels = 0.
-        self.filename = f"models/DanceGenGAN-{name}.pt"
+        self.filename = f"models/DanceGenGAN-{name}.pth"
         tgt_transform = transforms.Compose(
                             [transforms.Resize((128, 128)),
                             transforms.CenterCrop(128),
