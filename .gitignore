@@ -1,5 +1,2 @@
-*.pth
-*.csv
-*.mp4
-*.pkl
+data/
 __pycache__

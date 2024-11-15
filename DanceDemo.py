@@ -17,20 +17,25 @@ class DanceDemo:
         The animation/posture from self.source is applied to character define self.target using self.gen
     """
     def __init__(self, filename_src, filename_tgt, typeOfGen=2):
-        self.filename = filename_tgt
-        self.target = VideoSkeleton(self.filename)
         self.typeOfGen = typeOfGen
+        directory = os.path.dirname(__file__)
+        self.filename = ""
+        
+        filename_src = os.path.join(directory, filename_src)
+        filename_tgt = os.path.join(directory, filename_tgt)
+        self.target = VideoSkeleton(filename_tgt)
         self.source = VideoReader(filename_src)
+        print('---')
+        print(f"Source: {filename_src}")
+        print(f"Target: {filename_tgt}")
+        print('---')
+        
         if typeOfGen==1:           # Nearest
             print("Generator: GenNeirest")
             self.generator = GenNeirest(self.target)
         elif typeOfGen==2:         # VanillaNN
             print("Generator: GenSimpleNN")
-            if os.path.exists("data/DanceGenVanillaFromSke"+self.filename.split("/")[1].split(".")[0]+"1"+".pth"):
-                self.generator = GenVanillaNN( self.target, self.filename, loadFromFile=True, optSkeOrImage=1)
-            else:
-                self.generator = GenVanillaNN( self.target, self.filename, loadFromFile=False, optSkeOrImage=1)
-                self.generator.train()
+            self.generator = GenVanillaNN(self.target, loadFromFile=True, optSkeOrImage=1)
         elif typeOfGen==3:         # VanillaNN
             print("Generator: GenSimpleNN")
             if os.path.exists("data/DanceGenVanillaFromSke"+self.filename.split("/")[1].split(".")[0]+"2"+".pth"):
@@ -53,6 +58,8 @@ class DanceDemo:
         ske = Skeleton()
         image_err = np.zeros((128, 128, 3), dtype=np.uint8)
         image_err[:, :] = (0, 0, 255)  # (B, G, R)
+        print("Press 'q' to quit")
+        print(self.source.getTotalFrames())
         for i in range(self.source.getTotalFrames()):
             image_src = self.source.readFrame()
             if i%5 == 0:
@@ -75,6 +82,6 @@ class DanceDemo:
 
 
 if __name__ == '__main__':
-    GEN_TYPE = 4
+    GEN_TYPE = 2
     ddemo = DanceDemo("data/taichi2_full.mp4", "data/taichi1.mp4", GEN_TYPE)
     ddemo.draw()

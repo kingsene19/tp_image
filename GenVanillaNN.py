@@ -129,9 +129,9 @@ class ResidualBlock(nn.Module):
     def forward(self, x):
         return x + self.block(x)
 
-class GenSkeToImageNN(nn.Module):
+class GenNNSkeToImage(nn.Module):
     def __init__(self, latent_dim=26):
-        super(GenSkeToImageNN, self).__init__()
+        super(GenNNSkeToImage, self).__init__()
         
         # Initial projection
         self.initial = nn.Sequential(
@@ -301,16 +301,19 @@ class GenVanillaNN():
     """ class that Generate a new image from videoSke from a new skeleton posture
        Fonc generator(Skeleton)->Image
     """
-    def __init__(self, videoSke, skefile, loadFromFile=False, optSkeOrImage=1):
+    def __init__(self, videoSke, loadFromFile=False, optSkeOrImage=1):
         input_size=128
         if optSkeOrImage == 1:
             src_transform = None
-            self.netG = GenSkeToImageNN()
+            filename = "models/DanceGenVanillaFromSke.pth"
+            self.netG = GenNNSkeToImage()
         else:
             src_transform = SkeToImageTransform(input_size)
+            filename = "models/DanceGenVanillaFromSkeim.pth"
             self.netG = GenImageToImageNN()
-        self.skefile = skefile.split("/")[1].split(".")[0]
-        self.filename = "data/DanceGenVanillaFromSke"+self.skefile+str(optSkeOrImage)+".pth"
+        
+        directory = os.path.dirname(__file__)
+        self.filename = os.path.join(directory, filename)
         tgt_transform = transforms.Compose([
                             transforms.Resize(input_size),
                             transforms.CenterCrop(input_size),
@@ -322,7 +325,7 @@ class GenVanillaNN():
         if loadFromFile and os.path.isfile(self.filename):
             print("GenVanillaNN: Load=", self.filename)
             print("GenVanillaNN: Current Working Directory: ", os.getcwd())
-            self.netG = torch.load(self.filename)
+            self.netG = torch.load(self.filename, map_location=torch.device('cpu'))
 
 
     def train(self, n_epochs=20):
@@ -371,7 +374,7 @@ if __name__ == '__main__':
 
     targetVideoSke = VideoSkeleton(filename)
 
-    gen = GenVanillaNN(targetVideoSke, filename, loadFromFile=False, optSkeOrImage=1)
+    gen = GenVanillaNN(targetVideoSke, loadFromFile=False, optSkeOrImage=1)
     gen.train(50)
-    gen = GenVanillaNN(targetVideoSke, filename, loadFromFile=False, optSkeOrImage=2)
+    gen = GenVanillaNN(targetVideoSke, loadFromFile=False, optSkeOrImage=2)
     gen.train(50)

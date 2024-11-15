@@ -5,6 +5,7 @@ class VideoReader:
     """ Helper class for video utilities """
     def __init__(self, filename):
         self.cap = cv2.VideoCapture(filename)
+        self.filename = filename
         self._total_frames = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
         self._current_frame = 0
 
