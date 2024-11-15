@@ -57,12 +57,12 @@ class GenGAN():
     """ class that Generate a new image from videoSke from a new skeleton posture
        Fonc generator(Skeleton)->Image
     """
-    def __init__(self, videoSke, loadFromFile=False):
+    def __init__(self, videoSke, name, loadFromFile=False):
         self.netG = GenNNSkeImToImage()
         self.netD = Discriminator()
         self.real_labels = 1.
         self.fake_labels = 0.
-        self.filename = "models/DanceGenGAN.pth"
+        self.filename = f"models/DanceGenGAN-{name}.pt"
         tgt_transform = transforms.Compose(
                             [transforms.Resize((128, 128)),
                             transforms.CenterCrop(128),
@@ -84,37 +84,43 @@ class GenGAN():
         l1_loss_fn = nn.L1Loss()
         self.netG.train()
         self.netD.train()
-        for epoch in range(n_epochs):
-            for i, (ske, images) in enumerate(self.dataloader):
-                batch_size = images.shape[0]
-                fake_images = self.netG(ske)
-                real = torch.full((batch_size,), self.real_labels)
-                fake = torch.full((batch_size,), self.fake_labels)
+        try:
+            for epoch in range(n_epochs):
+                for i, (ske, images) in enumerate(self.dataloader):
+                    batch_size = images.shape[0]
+                    fake_images = self.netG(ske)
+                    real = torch.full((batch_size,), self.real_labels)
+                    fake = torch.full((batch_size,), self.fake_labels)
 
-                # Train Discriminator
-                optimizerD.zero_grad()
-                
-                output = self.netD(images)
-                errD_real = gan_loss_fn(output, real)
+                    # Train Discriminator
+                    optimizerD.zero_grad()
+                    
+                    output = self.netD(images)
+                    errD_real = gan_loss_fn(output, real)
 
-                output = self.netD(fake_images.detach())
-                errD_fake = gan_loss_fn(output, fake)
-                
-                errD = errD_real + errD_fake
-                
-                errD.backward()
-                optimizerD.step()
-                
-                # Train Generator
-                optimizerG.zero_grad()
-                output = self.netD(fake_images)
-                errG = 100 * l1_loss_fn(fake_images, images) + 1.0 * gan_loss_fn(output, real)
-                errG.backward()
-                optimizerG.step() 
+                    output = self.netD(fake_images.detach())
+                    errD_fake = gan_loss_fn(output, fake)
+                    
+                    errD = errD_real + errD_fake
+                    
+                    errD.backward()
+                    optimizerD.step()
+                    
+                    # Train Generator
+                    optimizerG.zero_grad()
+                    output = self.netD(fake_images)
+                    errG = 100 * l1_loss_fn(fake_images, images) + 1.0 * gan_loss_fn(output, real)
+                    errG.backward()
+                    optimizerG.step() 
 
-            print(f'Epoch [{epoch + 1}/{n_epochs}] Loss_D: {errD.item():.4f} Loss_G: {errG.item():.4f}', end='\r')
-            torch.save(self.netG, self.filename)
-            print(f"Model was saved at {epoch+1}")
+                print(f'Epoch [{epoch + 1}/{n_epochs}] Loss_D: {errD.item():.4f} Loss_G: {errG.item():.4f}', end='\r')
+                torch.save(self.netG, self.filename)
+                print(f"Model was saved at {epoch+1}")
+        except KeyboardInterrupt:
+            print("GenGAN: Training interrupted")
+            
+        torch.save(self.netG, self.filename)
+        print(f"Model was saved at {epoch+1}")
             
 
     def generate(self, ske):

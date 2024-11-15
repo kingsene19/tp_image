@@ -19,10 +19,10 @@ class DanceDemo:
     def __init__(self, filename_src, filename_tgt, typeOfGen=2):
         self.typeOfGen = typeOfGen
         directory = os.path.dirname(__file__)
-        self.filename = ""
         
         filename_src = os.path.join(directory, filename_src)
         filename_tgt = os.path.join(directory, filename_tgt)
+        self.name = os.path.basename(filename_tgt).split('.')[0]
         self.target = VideoSkeleton(filename_tgt)
         self.source = VideoReader(filename_src)
         print('---')
@@ -35,13 +35,13 @@ class DanceDemo:
             self.generator = GenNeirest(self.target)
         elif typeOfGen==2:         # VanillaNN from skeleton
             print("Generator: GenSimpleNN")
-            self.generator = GenVanillaNN(self.target, loadFromFile=True, optSkeOrImage=1)
+            self.generator = GenVanillaNN(self.target, self.name, loadFromFile=True, optSkeOrImage=1)
         elif typeOfGen==3:         # VanillaNN from image
             print("Generator: GenSimpleNN")
-            self.generator = GenVanillaNN(self.target, loadFromFile=True, optSkeOrImage=2)
+            self.generator = GenVanillaNN(self.target, self.name, loadFromFile=True, optSkeOrImage=2)
         elif typeOfGen==4:         # GAN
             print("Generator: GenSimpleNN")
-            self.generator = GenGAN(self.target, loadFromFile=True)
+            self.generator = GenGAN(self.target, self.name, loadFromFile=True)
         else:
             print("DanceDemo: typeOfGen error!!!")
 
@@ -74,6 +74,6 @@ class DanceDemo:
 
 
 if __name__ == '__main__':
-    GEN_TYPE = 4
+    GEN_TYPE = 3
     ddemo = DanceDemo("data/taichi2_full.mp4", "data/taichi1.mp4", GEN_TYPE)
     ddemo.draw()

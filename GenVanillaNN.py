@@ -301,15 +301,15 @@ class GenVanillaNN():
     """ class that Generate a new image from videoSke from a new skeleton posture
        Fonc generator(Skeleton)->Image
     """
-    def __init__(self, videoSke, loadFromFile=False, optSkeOrImage=1):
+    def __init__(self, videoSke, name, loadFromFile=False, optSkeOrImage=1):
         input_size=128
         if optSkeOrImage == 1:
             src_transform = None
-            filename = "models/DanceGenVanillaFromSke.pth"
+            filename = f"models/DanceGenVanillaFromSke-{name}.pth"
             self.netG = GenNNSkeToImage()
         else:
             src_transform = SkeToImageTransform(input_size)
-            filename = "models/DanceGenVanillaFromSkeim.pth"
+            filename = f"models/DanceGenVanillaFromSkeim-{name}.pth"
             self.netG = GenNNSkeImToImage()
         
         directory = os.path.dirname(__file__)
@@ -332,17 +332,20 @@ class GenVanillaNN():
         loss_fn = nn.L1Loss()
         optimizer = torch.optim.Adam(self.netG.parameters(), lr=0.0002, betas=(0.5, 0.999))
         self.netG.train()
-        for epoch in range(n_epochs):
-            for i, (ske, target_image) in enumerate(self.dataloader):
-                optimizer.zero_grad()
-                output_image = self.netG(ske)
-                loss = loss_fn(output_image, target_image)
-                loss.backward()
-                optimizer.step()  
-            print(f"Epoch [{epoch+1}/{n_epochs}], Loss: {loss.item():.4f}", end='\r')
-            if (epoch+1) % 20 == 0:
-                torch.save(self.netG, self.filename)
-                print(f"\nModel was saved at {epoch+1}")
+        try:
+            for epoch in range(n_epochs):
+                for i, (ske, target_image) in enumerate(self.dataloader):
+                    optimizer.zero_grad()
+                    output_image = self.netG(ske)
+                    loss = loss_fn(output_image, target_image)
+                    loss.backward()
+                    optimizer.step()  
+                print(f"Epoch [{epoch+1}/{n_epochs}], Loss: {loss.item():.4f}", end='\r')
+                if (epoch+1) % 20 == 0:
+                    torch.save(self.netG, self.filename)
+                    print(f"\nModel was saved at {epoch+1}")
+        except KeyboardInterrupt:
+            print("\nTraining was interrupted")
         torch.save(self.netG, self.filename)
         print("Final model was saved")
 
@@ -373,8 +376,8 @@ if __name__ == '__main__':
     print("GenVanillaNN: Filename=", filename)
 
     targetVideoSke = VideoSkeleton(filename)
-
-    gen = GenVanillaNN(targetVideoSke, loadFromFile=False, optSkeOrImage=1)
+    name = "taichi1"
+    gen = GenVanillaNN(targetVideoSke, name, loadFromFile=False, optSkeOrImage=1)
     gen.train(50)
-    gen = GenVanillaNN(targetVideoSke, loadFromFile=False, optSkeOrImage=2)
+    gen = GenVanillaNN(targetVideoSke, name, loadFromFile=False, optSkeOrImage=2)
     gen.train(50)
