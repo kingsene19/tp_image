@@ -119,6 +119,7 @@ class DanceDemo:
         typeGen = "Nearest" if self.typeOfGen==1 else "VanillaNN-Ske" if self.typeOfGen==2 else "VanillaNN-Image" if self.typeOfGen==3 else "GAN"
         directory = os.path.dirname(__file__)
         output_dir = os.path.join(directory, "output")
+        
         os.makedirs(output_dir, exist_ok=True)
         plt.savefig(os.path.join(output_dir, f"{self.name}-{typeGen}.png"))
         plt.show()
@@ -130,5 +131,6 @@ class DanceDemo:
 
 if __name__ == '__main__':
     GEN_TYPE = 4
-    ddemo = DanceDemo("data/taichi2_full.mp4", "data/taichi1.mp4", GEN_TYPE)
-    ddemo.plot()
+    for i in range(4):
+        ddemo = DanceDemo("data/taichi2_full.mp4", "data/taichi1.mp4", i+1)
+        ddemo.plot()

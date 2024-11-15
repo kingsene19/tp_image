@@ -10,22 +10,27 @@
 [Allez voir le sujet du TP ici](http://alexandre.meyer.pages.univ-lyon1.fr/m2-apprentissage-profond-image/am/tp_dance/)
 
 
-## Steps of implementation
+# Steps of implementation
 To realize this TP we performed the following steps
 
-### Nearest Neighbor
-To implement the approach consisting of searching for the closest skeleton, by looking through the Skeleton class we found that there existed a method for calculate the distance between two skeletons as well as in the VideoSkeleton class a method to get all the skeletons.<br/>
-As such we updated the generate method of the **GenNeirest** class by introducing variables to track the minimal distance found and the index of that closest skeleton. We then loop through all the skeletons in the videoSkeletonTarget by using the *skeCount()* method and calculate the distance between the input skeleton and the current skeleton by using the *distance()* method and update the minimum distance and index if the current distance is smaller the the minimum at that time.<br/>
+## Nearest Neighbor
+To implement the approach consisting of searching for the closest skeleton, by looking through the Skeleton class we found that there existed a method for calculate the distance between two skeletons as well as in the VideoSkeleton class a method to get all the skeletons.
+
+As such we updated the generate method of the **GenNeirest** class by introducing variables to track the minimal distance found and the index of that closest skeleton. We then loop through all the skeletons in the videoSkeletonTarget by using the *skeCount()* method and calculate the distance between the input skeleton and the current skeleton by using the *distance()* method and update the minimum distance and index if the current distance is smaller the the minimum at that time.
+
 At the end of the loop, if a valid index was found we then return the corresponding image by using the *readImage()* method and if not we return an empty white image.
 
-### Direct Network
+### Results :
+![Nearest Neighbor](img/taichi1-Nearest.png)
+
+## Direct Network
 
 Seeing as this network presents two approches with one requiring drawing an image form the x,y coordiantes of the given skeleton we first begin by modifying the SkeletonToImageTransform class by modifying the call method in order to create said image by drawing on an empty image using the Skeleton.draw_reduced image and then converting it to a tensor image.<br/>
 For the loss function of the model we want to use a combination of perceptual, reconstruction and pose losses while assigning weights to each. The reconstruction and pose loss allow us to check that the generated image pose is indeed correct and the perceptual loss allows us to have good visuals. We also create two networks<br/>
-- GenSkeToImageNN
+- **GenNNSkeToImage**
 This network allows us to create a new image from the given skeleton posture in x,y coordinates which are flattened into a 1D tensor. We thus create the neural network by upsampling to project the input to a higher dimension then uspsampling into an inital 16x16 images we also apply self-attention before going through a residual block as presented in the ResNet architecture and apply our final upsampling to get the image size of (3,128,128). We also use the Tanh activation function to normalize the image between -1 et 1 and initialize the weights using the *init_weights()* method.
 We also write the *forward()* method to pass the inputs to the model
-- GenImageToImage NN
+- **GenNNSkeImToImage**
 This network allows us to create a new image from the given skeleton posture in x,y coordinates which was turned into an image beforehand. To do so we proceed by first downsampling the image into a smaller representation then going through the bottleneck with residual blocks before upsampling the obtained representation to the final image. To ensure better consistent and better feature representation we also include skip connections as shown in the UNet architecture between corresponding encoder and decoder blocks. We also use the Tanh activation function to normalize the image between -1 et 1 and initialize the weights using the *init_weights()* method. We write the *forward()* method to pass our inputs to the model
 
 We then update the **GenVanillaNN** class's intialization method by setting the source transformation and network to use based on the selected option. For option 1 we have no source transformation and we use the GenSkeToImage network, for option 2 we use the SkeToImageTransform as source transformation on the input ske to obtain the image and the GenImageToImage network. We also update the filename to include the option selected and the target video name in order to not overwrite the saved models for differents options or videos. We leave the rest of the code as it was with the creation of the dataset now also including the source transformation.<br/>
@@ -35,8 +40,14 @@ We also write the *generate()* method which starts by setting the model to evalu
 
 We also update the main function of the file so that when run it now trains for both option 1 and option 2 for 50 epochs each.
 
+### Results :
+#### Skeleton to Image
+![Skeleton to Image](img/taichi1-VanillaNN-Ske.png)
 
-### GAN
+#### Skeleton Image to Image
+![Image to Image](img/taichi1-VanillaNN-Image.png)
+
+## GAN
 
 We first start creating our discriminator network to predict whether the images are real or fake. The network consists of first downsampling the input image using convolution to obtain feature maps before using a *Sigmoid* activation function in order to get a value between 0 and 1 based on whether the image is real or not.<br/>
 We also use as loss function the Binary Cross Entropy as we are performing binary classification for the Discriminator and it is well suited to the task and for the Generator we use a combination of our previous L1Loss as well as the adversarial loss which is also binary cross entropy based on whether the generator was able to fool the discriminator or not.
@@ -49,6 +60,11 @@ We also write the *generate()* method which starts by setting the generator to e
 
 We also update the main function of the file to perform training for 10 epochs.
 
+### Results :
+![GAN](img/taichi1-GAN.png)
+
+
+# Running the code
 ## Create and activate an environment with all the required dependenc
 ```bash
 conda env create -f env.yaml
