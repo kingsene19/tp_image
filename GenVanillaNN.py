@@ -1,3 +1,4 @@
+import torch.backends
 import numpy as np
 import cv2
 import os
@@ -45,8 +46,7 @@ class VideoSkeletonDataset(Dataset):
         self.source_transform = source_transform
         self.target_transform = target_transform
         self.ske_reduced = ske_reduced
-        print("VideoSkeletonDataset: ",
-              "ske_reduced=", ske_reduced, "=(", Skeleton.reduced_dim, " or ",Skeleton.full_dim,")" )
+        # print("VideoSkeletonDataset: ", "ske_reduced=", ske_reduced, "=(", Skeleton.reduced_dim, " or ",Skeleton.full_dim,")" )
 
 
     def __len__(self):
@@ -76,7 +76,7 @@ class VideoSkeletonDataset(Dataset):
 
 
     def tensor2image(self, normalized_image):
-        numpy_image = normalized_image.detach().numpy()
+        numpy_image = normalized_image.detach().cpu().numpy()
         numpy_image = np.transpose(numpy_image, (1, 2, 0))
         numpy_image = cv2.cvtColor(np.array(numpy_image), cv2.COLOR_RGB2BGR)
         denormalized_image = numpy_image * np.array([0.5, 0.5, 0.5]) + np.array([0.5, 0.5, 0.5])
@@ -133,14 +133,15 @@ class GenNNSkeToImage(nn.Module):
     def __init__(self, latent_dim=26):
         super(GenNNSkeToImage, self).__init__()
         
-        # Initial projection
+        # LATENT EXPANSION BLOCK
         self.initial = nn.Sequential(
             nn.ConvTranspose2d(latent_dim, 512, kernel_size=4, stride=1, padding=0),
             nn.InstanceNorm2d(512),
             nn.LeakyReLU(0.2, inplace=True)
         )
         
-        # Upsampling layers
+        # FEATURE UPSAMPLING BLOCKS
+        # Each block upsamples the feature map by a factor of 2
         self.up1 = nn.Sequential(
             nn.ConvTranspose2d(512, 256, kernel_size=4, stride=2, padding=1),
             nn.InstanceNorm2d(256),
@@ -153,9 +154,11 @@ class GenNNSkeToImage(nn.Module):
             nn.LeakyReLU(0.2, inplace=True)
         )
         
-        # Add self-attention after 16x16 resolution
+        # SELF-ATTENTION BLOCK
         self.attention = SelfAttention(128)
         
+        
+        # FINAL UPSAMPLING BLOCKS
         self.up3 = nn.Sequential(
             nn.ConvTranspose2d(128, 64, kernel_size=4, stride=2, padding=1),
             nn.InstanceNorm2d(64),
@@ -168,14 +171,14 @@ class GenNNSkeToImage(nn.Module):
             nn.LeakyReLU(0.2, inplace=True)
         )
         
-        # Residual blocks for better feature processing
+        # RESIDUAL BLOCKS
         self.res_blocks = nn.Sequential(
             ResidualBlock(32),
             ResidualBlock(32),
             ResidualBlock(32)
         )
         
-        # Final upsampling and output
+        # IMAGE SYNTHESIS BLOCK
         self.final = nn.Sequential(
             nn.ConvTranspose2d(32, 16, kernel_size=4, stride=2, padding=1),
             nn.InstanceNorm2d(16),
@@ -302,7 +305,9 @@ class GenVanillaNN():
        Fonc generator(Skeleton)->Image
     """
     def __init__(self, videoSke, name, loadFromFile=False, optSkeOrImage=1):
+        self.device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
         input_size=128
+        self.optSkeOrImage = optSkeOrImage
         if optSkeOrImage == 1:
             src_transform = None
             filename = f"models/DanceGenVanillaFromSke-{name}.pth"
@@ -323,9 +328,9 @@ class GenVanillaNN():
         self.dataset = VideoSkeletonDataset(videoSke, ske_reduced=True, target_transform=tgt_transform, source_transform=src_transform)
         self.dataloader = torch.utils.data.DataLoader(dataset=self.dataset, batch_size=32, shuffle=True)
         if loadFromFile and os.path.isfile(self.filename):
-            print("GenVanillaNN: Load=", self.filename)
-            print("GenVanillaNN: Current Working Directory: ", os.getcwd())
-            self.netG = torch.load(self.filename, map_location=torch.device('cpu'))
+            # print("GenVanillaNN: Load=", self.filename)
+            # print("GenVanillaNN: Current Working Directory: ", os.getcwd())
+            self.netG = torch.load(self.filename, map_location=self.device)
 
 
     def train(self, n_epochs=20):
@@ -356,6 +361,7 @@ class GenVanillaNN():
         with torch.no_grad():
             ske_t = self.dataset.preprocessSkeleton(ske)
             ske_t_batch = ske_t.unsqueeze(0)
+            ske_t_batch = ske_t_batch.to(self.device)
             normalized_output = self.netG(ske_t_batch)
             res = self.dataset.tensor2image(normalized_output[0])  
             return res

@@ -51,22 +51,26 @@ class VideoSkeleton:
         mod_frame = modFrame                 # only one frame every mod_frame is processed (taichi1.mp4 has 14000 frames with 20=>700 frames))
 
         filename_pkl, filename_dir, filename_base = filename_change_ext(filename, ".pkl")
-        print("directory: "+filename_dir+"/"+filename_base)
+        self.filename_pkl = filename_pkl
+        self.filename_dir = filename_dir
+        self.filename_base = filename_base
+        
+        # print("directory: "+filename_dir+"/"+filename_base)
         if not os.path.exists(filename_dir+"/"+filename_base):
-            print("create directory: "+filename_dir+"/"+filename_base)
+            # print("create directory: "+filename_dir+"/"+filename_base)
             os.makedirs(filename_dir+"/"+filename_base)
         
         self.path = os.path.dirname(filename)
         if os.path.exists(filename_pkl) and os.path.exists(filename_dir) and not forceCompute:
-            print("===== read precompute: "+filename)
+            # print("===== read precompute: "+filename)
             vs = VideoSkeleton.load(filename_pkl)
             self.ske = vs.ske
             self.im = vs.im
             return
     
-        print("===== compute: "+filename)
+        # print("===== compute: "+filename)
         video = VideoReader(filename)
-        print("read: "+filename+ " #frame="+str(video.getTotalFrames()))
+        # print("read: "+filename+ " #frame="+str(video.getTotalFrames()))
         self.ske = [] #np.empty( 0, dtype=Skeleton)
         self.im = []
         for i in range(video.getTotalFrames()):
@@ -77,11 +81,15 @@ class VideoSkeleton:
                 if isSke:
                     filename_im = filename_base + "/image" + str(i) + ".jpg"
                     filename_imsave = filename_dir + "/" + filename_im
-                    cv2.imwrite(filename_imsave, image)
+                    try:
+                        cv2.imwrite(filename_imsave, image)
+                    except:
+                        print("Error: cv2.imwrite("+filename_imsave+")")
+                        cv2.imwrite(np)
                     #self.ske = np.append(self.ske, ske)
                     self.ske.append( ske )
                     self.im.append(filename_im )
-                    print("frame "+str(i)+"/"+str(video.getTotalFrames()) + "   filename="+filename_im + "  save="+filename_imsave + " sizeof="+str(sys.getsizeof(self.ske)))
+                    print("frame "+str(i)+"/"+str(video.getTotalFrames()) + "   filename="+filename_im + "  save="+filename_imsave + " sizeof="+str(sys.getsizeof(self.ske)), end="\r")
             #         del filename_im
             #     del ske
             # del image
@@ -95,7 +103,7 @@ class VideoSkeleton:
             skenp[i] = self.ske[i]
         self.ske = skenp
         self.im = np.array(self.im)
-        print("#skeleton="+str(self.ske.shape) + " #image="+str(self.im.shape))
+        # print("#skeleton="+str(self.ske.shape) + " #image="+str(self.im.shape))
         self.save( filename_pkl )
 
 
@@ -122,14 +130,14 @@ class VideoSkeleton:
     def save(self,filename):
         with open(filename, "wb") as fichier:
             pickle.dump(self, fichier)
-        print("save: "+filename)
+        # print("save: "+filename)
 
 
     @classmethod
     def load(cls, filename):
         with open(filename, 'rb') as fichier:
             objet_charge = pickle.load(fichier)
-        print("VideoSkeleton::load: "+filename + " #skeleton="+str(objet_charge.ske.shape) + " #image="+str(objet_charge.im.shape))
+        # print("VideoSkeleton::load: "+filename + " #skeleton="+str(objet_charge.ske.shape) + " #image="+str(objet_charge.im.shape))
         return objet_charge
 
 
@@ -160,25 +168,31 @@ class VideoSkeleton:
             cv2.imshow('Image', resim)
             if cv2.waitKey(5) & 0xFF == ord('q'):
                 break
-        cv2.destroyAllWindows()        
+        cv2.destroyAllWindows()   
+        
+    def save_video(self):
+        """ save skeleton on image """
+        filename = f"output/ske-{self.filename_base}.avi"
+        print("Saving video: ", filename, end="\r")
+        fourcc = cv2.VideoWriter_fourcc(*'XVID')
+        width = 256
+        height = 256
+        out = cv2.VideoWriter(filename, fourcc, 30.0, (width, height))
+        for i in range(self.skeCount()):
+            empty = np.zeros((height, width, 3), dtype=np.uint8)
+            self.ske[i].draw(empty)
+            out.write(empty)
+        out.release()
+        print("Video saved to ", filename)
+             
 
 
 if __name__ == '__main__':
-    force = True
-    #force = False
-    modFRame = 10           # 10=>1440 images, 25=>560 images, 100=>140 images, 500=>280 images
-
-    if len(sys.argv) > 1:
-        filename = sys.argv[1]
-        if len(sys.argv) > 2:
-            force = sys.argv[2].lower() == "true"
-            if len(sys.argv) > 3:
-                modFRame = int(sys.argv[3])
-    else:
-        filename = "data/taichi1.mp4"
+    force = False
+    modFRame = 1
+    filename = "data/taichi2.mp4"
     print("Current Working Directory: ", os.getcwd())
     print("Filename=", filename)
 
     s = VideoSkeleton(filename, force, modFRame)
-    print(s)
     s.draw()

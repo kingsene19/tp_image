@@ -73,7 +73,7 @@ class GenGAN():
         self.dataset = VideoSkeletonDataset(videoSke, ske_reduced=True, target_transform=tgt_transform, source_transform=src_transform)
         self.dataloader = torch.utils.data.DataLoader(dataset=self.dataset, batch_size=32, shuffle=True)
         if loadFromFile and os.path.isfile(self.filename):
-            print("GenGAN: Load=", self.filename, "   Current Working Directory=", os.getcwd())
+            # print("GenGAN: Load=", self.filename, "   Current Working Directory=", os.getcwd())
             self.netG = torch.load(self.filename, map_location=torch.device('cpu'))
 
 
